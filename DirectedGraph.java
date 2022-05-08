@@ -15,8 +15,8 @@ public class DirectedGraph {
 
     private static final boolean DEBUG = false;
     private ArrayList<DirectedGraphNode> nodes;
-    private ArrayList<BigNode> dfsList;
-    private ArrayList<BigNode> queue;
+    private ArrayList<DirectedGraphNode> dfsList;
+    private ArrayList<DirectedGraphNode> queue;
     private int clock = 0;
 
 
@@ -32,8 +32,9 @@ public class DirectedGraph {
     public DirectedGraph(boolean[][] adjacencyMatrix) {
 
         nodes = new ArrayList<DirectedGraphNode>();
-        dfsList = new ArrayList<BigNode>();
-        queue = new ArrayList<BigNode>();
+        dfsList = new ArrayList<DirectedGraphNode>();
+        queue = new ArrayList<DirectedGraphNode>();
+        clock = 1;
 
         // populate the graph with nodes.
         for (int i = 0; i < adjacencyMatrix.length; i++) {
@@ -166,13 +167,15 @@ public class DirectedGraph {
 
     private void dfs() {
         DirectedGraphNode startNode = findNode(0);
-        DirectedGraphNode endNode = findNode(nodes.size());
+        startNode.setPre(clock);
+        clock++;
+        //DirectedGraphNode endNode = findNode(nodes.size());
         for (DirectedGraphNode node : startNode.outgoingNodes) { //this should be recursively or iteratively called on all nodes
-            BigNode currentNode = new BigNode(false, -1, -1, node); //initializing the node
-            dfsList.add(currentNode);           //list of children with pre and post numbers
+            //BigNode currentNode = new BigNode(-1, -1, node); //initializing the node
+            dfsList.add(node);           //list of children with pre and post numbers
         }
         //this is supposed to go across all the BigNode values stored in the dfsList?
-        for (BigNode node : dfsList) {
+        for (DirectedGraphNode node : dfsList) {
             if (node.isVisited) {
                 //add this to queue for later
                 //this could be like a linked list with the parent node and then the child
@@ -186,23 +189,24 @@ public class DirectedGraph {
     /**
      * This is just the explore method, passed the DFSList so that it can access it
      */
-    private void explore(BigNode node) {
+    private void explore(DirectedGraphNode node) {
         node.setIsVisited(true);
         node.setPre(clock);
         this.clock++;
         //this we want to go across the nodes stemming from the passed node
-        for (BigNode currentNode:dfsList) {
+        for (DirectedGraphNode currentNode:node.outgoingNodes) {
             if (currentNode.getIsVisited()) {
                 //add to queue
                 queue.add(currentNode);
             } else {
                 //check that these are setting the pre and post numbers correctly
-                currentNode.setPre(clock);
+                //currentNode.setPre(clock);
                 explore(currentNode);
-                currentNode.setPost(clock);
+                //currentNode.setPost(clock);
             }
         }
         node.setPost(clock);
+        System.out.println(" data: "+node.data+", pre: "+node.pre+", post: "+node.post);
         this.clock++;
     }
 
@@ -220,8 +224,8 @@ public class DirectedGraph {
          * Constructor for BigNode, everything else is getters and setters so it should
          * be pretty clear
          */
-        public BigNode(boolean isVisited, int pre, int post, DirectedGraphNode node) {
-            this.isVisited = isVisited;
+        public BigNode(int pre, int post, DirectedGraphNode node) {
+            this.isVisited = false;
             this.pre = pre;
             this.post = post;
             this.node = node;
@@ -407,6 +411,9 @@ public class DirectedGraph {
 
         private int data;
         private int inDegree;
+        private boolean isVisited;
+        private int pre;
+        private int post;
 
         private Integer coverSize;
 
@@ -414,7 +421,9 @@ public class DirectedGraph {
 
 
         public DirectedGraphNode(int data) {
-
+            isVisited = false;
+            pre = -1;
+            post = -1;
             this.data = data;
             this.coverSize = null;
             this.outgoingNodes = new LinkedList<DirectedGraphNode>();
@@ -428,15 +437,31 @@ public class DirectedGraph {
         public void incrementInDegree() {
             this.inDegree++;
         }
+        public int getPost() {
+            return post;
+        }
+        public int getPre() {
+            return pre;
+        }
+        public void setPre(int pre) {
+            this.pre = pre;
+        }
+        public void setPost(int post) {
+            this.post = post;
+        }
 
-
+        public void setIsVisited(boolean isVisited) {
+            this.isVisited = isVisited;
+        }
+        public boolean getIsVisited(){
+            return isVisited;
+        }
         /**
          * returns this node's in degree.
          * This is the amount of nodes that this node has as a parent.
          *
          * @return the in degree of this node.
          */
-
         public int getInDegree() {
             return this.inDegree;
         }//getInDegree
