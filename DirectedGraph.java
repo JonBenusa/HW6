@@ -15,7 +15,7 @@ public class DirectedGraph {
 
     private static final boolean DEBUG = false;
     private ArrayList<DirectedGraphNode> nodes;
-    private ArrayList<DirectedGraphNode> dfsList;
+    //private ArrayList<DirectedGraphNode> dfsList;
     private ArrayList<DirectedGraphNode> queue;
     private int clock = 0;
 
@@ -32,7 +32,6 @@ public class DirectedGraph {
     public DirectedGraph(boolean[][] adjacencyMatrix) {
 
         nodes = new ArrayList<DirectedGraphNode>();
-        dfsList = new ArrayList<DirectedGraphNode>();
         queue = new ArrayList<DirectedGraphNode>();
         clock = 1;
 
@@ -66,6 +65,8 @@ public class DirectedGraph {
 
     public DirectedGraph(int[][] adjacencyList) {  //have an uphill adjacency list and a downhill adjacency list
         nodes = new ArrayList<DirectedGraphNode>();
+        queue = new ArrayList<DirectedGraphNode>();
+        clock = 1;
 
         // populates the graph with nodes.
         for (int i = 0; i < adjacencyList.length; i++) {
@@ -152,33 +153,35 @@ public class DirectedGraph {
         return findCycle();
     }// isAcyclic
 
-    //should be private cycle finder method here
-    //should look at each edge on the stack and compare post numbers
-    //if back edge behavior, break loop and return false
-    //if makes it to the end return true
+    /**
+     * This is a private helper method that finds cycles by looking
+     * at post numbers
+     *
+     */
     private boolean findCycle() {
+        if(queue==null) {
+            return true;
+        }
         for (int i = 1; i < queue.size(); i++) {
-            if (queue.get(i).post > queue.get(i - 1).post) { //this might be backwards, but it is an easy fix
+            if (queue.get(i).post > queue.get(i - 1).post) {
                 return false;
             }
         }
         return true;
     }
 
+    /**
+     * This is the dfs algorithm
+     */
     private void dfs() {
-        DirectedGraphNode startNode = findNode(0);
-        startNode.setPre(clock);
-        clock++;
-        //DirectedGraphNode endNode = findNode(nodes.size());
-        for (DirectedGraphNode node : startNode.outgoingNodes) { //this should be recursively or iteratively called on all nodes
-            //BigNode currentNode = new BigNode(-1, -1, node); //initializing the node
-            dfsList.add(node);           //list of children with pre and post numbers
+        List<DirectedGraphNode> roots = findRoots();
+        if(roots==null) {
+            roots.add(findNode(0));
         }
-        //this is supposed to go across all the BigNode values stored in the dfsList?
-        for (DirectedGraphNode node : dfsList) {
+        for (DirectedGraphNode node : roots) {
             if (node.isVisited) {
-                //add this to queue for later
-                //this could be like a linked list with the parent node and then the child
+                //add this to queue for later, this means it has already been visited, thus not a tree edge
+                //if it is not a tree edge it may be a back edge, thus there may be a cycle
                 queue.add(node);
             } else {
                 explore(node);
@@ -187,7 +190,7 @@ public class DirectedGraph {
     }
 
     /**
-     * This is just the explore method, passed the DFSList so that it can access it
+     * This is the dfs algorithm explore
      */
     private void explore(DirectedGraphNode node) {
         node.setIsVisited(true);
@@ -196,97 +199,18 @@ public class DirectedGraph {
         //this we want to go across the nodes stemming from the passed node
         for (DirectedGraphNode currentNode:node.outgoingNodes) {
             if (currentNode.getIsVisited()) {
-                //add to queue
+                //add to queue the parent and the child if visited
+                //this means it has already been visited, thus not a tree edge
+                //if it is not a tree edge it may be a back edge, thus there may be a cycle
+                queue.add(node);
                 queue.add(currentNode);
             } else {
-                //check that these are setting the pre and post numbers correctly
-                //currentNode.setPre(clock);
                 explore(currentNode);
-                //currentNode.setPost(clock);
             }
         }
         node.setPost(clock);
-        System.out.println(" data: "+node.data+", pre: "+node.pre+", post: "+node.post);
         this.clock++;
     }
-
-    /**
-     * This class contains the type BigNode, which is like the normal DirectedGraphNode,
-     * just with more data in order to be useful in finding cycles
-     */
-    private static class BigNode {
-        private boolean isVisited;
-        private int pre;
-        private int post;
-        private DirectedGraphNode node;
-
-        /**
-         * Constructor for BigNode, everything else is getters and setters so it should
-         * be pretty clear
-         */
-        public BigNode(int pre, int post, DirectedGraphNode node) {
-            this.isVisited = false;
-            this.pre = pre;
-            this.post = post;
-            this.node = node;
-        }
-
-        public boolean getIsVisited() {
-            return this.isVisited;
-        }
-
-        public void setIsVisited(boolean isVisited) {
-            this.isVisited = isVisited;
-        }
-
-        public DirectedGraphNode getNode() {
-            return this.node;
-        }
-
-        public void setPre(int pre) {
-            this.pre = pre;
-        }
-
-        public void setPost(int post) {
-            this.post = post;
-        }
-
-        /*public int getPost(){
-            return post;
-        }*/
-    }
-
-    /**
-     * This is supposed to be the list of nodes in the order they are visited,
-     * only real use is for DFS
-     */
-    /*private static class ArrayList<BigNode>{     //this shit is wrong, obviously. but why?
-        private ArrayList<BigNode> dfsList = new ArrayList<>();
-        private int clock = 0;
-
-        public void addNode(BigNode node){
-            dfsList.add(node);
-        }
-
-        public ArrayList getDFSList(){
-            return this.dfsList;
-        }
-
-        public BigNode getNode(int index){
-            return dfsList.get(index);
-        }
-
-        //these are in here because it is the only object that should be everywhere
-        public void updateClock(){
-            this.clock = clock++;
-        }
-
-        public int getClock(){
-            return this.clock;
-        }
-
-    }*/
-
 
     /**
      * Retrieves the number of nodes in the Graph.
